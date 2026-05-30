@@ -1,0 +1,25 @@
+name: Gitleaks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    container:
+      image: zricethezav/gitleaks:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          gitleaks detect --source . --verbose
