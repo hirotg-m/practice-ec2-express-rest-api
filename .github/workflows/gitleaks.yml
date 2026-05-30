@@ -20,4 +20,6 @@ jobs:
           fetch-depth: 0
 
       - name: Run gitleaks
-        run: gitleaks detect --source . --verbose
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          gitleaks detect --source . --verbose
