@@ -10,6 +10,8 @@ jobs:
   scan:
     name: Secret Scan
     runs-on: ubuntu-latest
+    container:
+      image: zricethezav/gitleaks:latest
 
     steps:
       - name: Checkout repository
@@ -18,6 +20,4 @@ jobs:
           fetch-depth: 0
 
       - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gitleaks detect --source . --verbose
