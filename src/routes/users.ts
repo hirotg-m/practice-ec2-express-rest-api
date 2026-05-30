@@ -24,7 +24,7 @@ router.get('/search', (req: Request, res: Response) => {
 // 修正2: execFileで引数を分離し、入力をバリデーション + レートリミット
 router.get('/ping', limiter, (req: Request, res: Response) => {
   const host = req.query.host as string;
-  if (typeof host !== 'string' || !/^[a-zA-Z0-9.\-]+$/.test(host)) {
+  if (typeof host !== 'string' || !/^[a-zA-Z0-9.-]+$/.test(host)) {
     res.status(400).json({ error: 'Invalid host' });
     return;
   }
