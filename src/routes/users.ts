@@ -1,37 +1,57 @@
 import { Router, Request, Response } from 'express';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const router = Router();
 
-// 脆弱性1: SQLインジェクション（ユーザー入力を直接クエリに埋め込み）
+// 修正1: パラメータ化クエリ（実際のDB使用時はプレースホルダを使う）
 router.get('/search', (req: Request, res: Response) => {
   const username = req.query.username;
-  const query = `SELECT * FROM users WHERE name = '${username}'`;
-  res.json({ query });
+  if (typeof username !== 'string' || !/^[a-zA-Z0-9_]+$/.test(username)) {
+    res.status(400).json({ error: 'Invalid username' });
+    return;
+  }
+  res.json({ username });
 });
 
-// 脆弱性2: コマンドインジェクション（ユーザー入力をシェルコマンドに渡す）
+// 修正2: execFileで引数を分離し、入力をバリデーション
 router.get('/ping', (req: Request, res: Response) => {
   const host = req.query.host as string;
-  exec(`ping -c 1 ${host}`, (error, stdout) => {
+  if (typeof host !== 'string' || !/^[a-zA-Z0-9.\-]+$/.test(host)) {
+    res.status(400).json({ error: 'Invalid host' });
+    return;
+  }
+  execFile('ping', ['-c', '1', host], (error, stdout) => {
     res.json({ result: stdout });
   });
 });
 
-// 脆弱性3: パストラバーサル（ユーザー入力でファイルパスを構築）
+// 修正3: ファイル名を正規化し、ディレクトリトラバーサルを防止
 router.get('/file', (req: Request, res: Response) => {
   const filename = req.query.name as string;
-  const filePath = path.join('/data', filename);
+  if (typeof filename !== 'string' || /[/\\]/.test(filename)) {
+    res.status(400).json({ error: 'Invalid filename' });
+    return;
+  }
+  const basePath = '/data';
+  const filePath = path.join(basePath, path.basename(filename));
+  if (!filePath.startsWith(basePath)) {
+    res.status(403).json({ error: 'Access denied' });
+    return;
+  }
   const content = fs.readFileSync(filePath, 'utf-8');
   res.json({ content });
 });
 
-// 脆弱性4: XSS（レスポンスにユーザー入力をそのまま反映）
+// 修正4: テキストレスポンスでエスケープ処理
 router.get('/greet', (req: Request, res: Response) => {
   const name = req.query.name;
-  res.send(`<h1>Hello, ${name}!</h1>`);
+  if (typeof name !== 'string') {
+    res.status(400).json({ error: 'Invalid name' });
+    return;
+  }
+  res.type('text').send(`Hello, ${name}!`);
 });
 
 export default router;
