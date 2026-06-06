@@ -11,6 +11,12 @@ const limiter = rateLimit({
 
 const router = Router();
 
+const users = [
+  { id: 1, username: 'test_user', email: 'test@example.com' },
+  { id: 2, username: 'john_doe', email: 'john@example.com' },
+  { id: 3, username: 'jane_smith', email: 'jane@example.com' },
+];
+
 // 修正1: パラメータ化クエリ（実際のDB使用時はプレースホルダを使う）
 router.get('/search', (req: Request, res: Response) => {
   const username = req.query.username;
@@ -18,7 +24,12 @@ router.get('/search', (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid username' });
     return;
   }
-  res.json({ username });
+  const result = users.filter((u) => u.username.includes(username));
+  if (result.length === 0) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+  res.json(result);
 });
 
 // 修正2: execFileで引数を分離し、入力をバリデーション + レートリミット
@@ -40,14 +51,18 @@ router.get('/file', limiter, (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid filename' });
     return;
   }
-  const basePath = '/data';
+  const basePath = path.join(__dirname, '..', '..', 'data');
   const filePath = path.join(basePath, path.basename(filename));
   if (!filePath.startsWith(basePath)) {
     res.status(403).json({ error: 'Access denied' });
     return;
   }
-  const content = fs.readFileSync(filePath, 'utf-8');
-  res.json({ content });
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    res.json({ content });
+  } catch {
+    res.status(404).json({ error: 'File not found' });
+  }
 });
 
 // 修正4: HTMLエスケープ処理

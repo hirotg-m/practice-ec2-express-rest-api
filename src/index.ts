@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from 'express';
+import usersRouter from './routes/users';
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
@@ -22,6 +23,9 @@ app.get('/', (req: Request, res: Response) => {
     version: '1.0.0',
   });
 });
+
+// Users routes
+app.use('/users', usersRouter);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
