@@ -141,19 +141,15 @@ Server is running on http://localhost:3000
 別のターミナルウィンドウで実行：
 
 ```bash
-curl http://localhost:3000/health
+curl -s -w '\nHTTP Status: %{http_code}\n' http://localhost:3000/health
 ```
 
 期待されるレスポンス：
 
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-05-30T12:34:56.789Z"
-}
 ```
-
-HTTP ステータスコードが `200` であることを確認します。
+{"status":"ok","timestamp":"2026-05-30T12:34:56.789Z"}
+HTTP Status: 200
+```
 
 ## トラブルシューティング
 
